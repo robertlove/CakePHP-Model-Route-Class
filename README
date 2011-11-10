@@ -1,41 +1,38 @@
 CakePHP Model Route Class
 
-A CakePHP class for forward and reverse routing of routes accessible via a
-model. For example, routes stored in a database table.
+A CakePHP class for forward and reverse routing of routes accessible via a model. For example, routes stored in a database table.
 
 INSTALLATION
-------------
+----------------------
 
 1. Copy ModelRoute.php to your app/Lib directory
 
 CONFIGURATION
----------------
+----------------------
 
 1. Add the following to app/Config/routes.php:
 
     App::import('Lib', 'ModelRoute');
     Router::connect('/', array('controller' => 'pages', 'action' => 'display'), array('routeClass' => 'ModelRoute'));
 
-2. Update the ModelRoute::fields property
-
-3. Update the ModelRoute::modelName property
+2. Update the ModelRoute::settings property to reflect your needs
 
 USAGE
----------------
+----------------------
 
-Assuming you have a model named "Route" which uses a table named "routes" having
-the fields "name" and "value", the following records could be added to create
-database-driven routes:
+Assuming you have a model named "Route" which uses a table with the fields "name" and "value", the following records could be added to create database-driven routes:
 
+-----------------------------------------------
 | id | name                    | value        |
+-----------------------------------------------
 |  1 | cakephp-is-really-tasty | posts/view/1 |
 |  2 | people/robert-love      | users/view/2 |
 |  3 | tags/cake               | tags/view/3  |
 |  4 | tags/php                | tags/view/5  |
+-----------------------------------------------
 
 LICENSE
--------
+----------------------
 
-This source file is subject to the MIT License that is available through the
-world-wide-web at the following URI:
+This source file is subject to the MIT License that is available through the world-wide-web at the following URI:
 http://www.opensource.org/licenses/mit-license.php.

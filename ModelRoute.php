@@ -1,6 +1,6 @@
 <?php
 /**
- * CakePHP Model Route
+ * Model Route
  *
  * A CakePHP class for forward and reverse routing of routes accessible via a
  * model. For example, routes stored in a database table.
@@ -11,8 +11,6 @@
  * through the world-wide-web at the following URI:
  * http://www.opensource.org/licenses/mit-license.php.
  *
- * @category   CategoryName
- * @package    PackageName
  * @author     Robert Love <robert.love@signified.com.au>
  * @copyright  Copyright 2011, Signified (http://signified.com.au/)
  * @license    MIT License (http://www.opensource.org/licenses/mit-license.php)
@@ -21,48 +19,35 @@
  * @see        CakeRoute::match(), CakeRoute::parse()
  * @since      File available since Release 2.0
  */
-
 class ModelRoute extends CakeRoute
 {
     /**
-     * Fields
+     * Settings for this object.
      *
-     * The fields used to identify a route. Defaults to "name" and "value".
+     * - `fields` The fields to use to identify a route by.
+     * - `model` The model name of the Route, defaults to Route.
+     * - `scope` Additional conditions to use when looking up a route,
+     *    e.g. `array('Route.active' => 1).`
      *
      * @var array
      */
-    public $fields = array(
-        'name' => 'name',
-        'value' => 'value'
+    public $settings = array(
+        'fields' => array(
+            'name' => 'name',
+            'value' => 'value'
+        ),
+        'model' => 'Route',
+        'scope' => array()
     );
-
-    /**
-     * Model
-     *
-     * An instance of the route model named in $modelName.
-     *
-     * @var object
-     */
-    public $Model = null;
-
-    /**
-     * Model Name
-     *
-     * The name of the route model. Defaults to "Route".
-     *
-     * @var string
-     */
-    public $modelName = 'Route';
 
     /**
      * Constructor
      *
      * @return void
      */
-    public function __construct()
+    public function __construct($settings = array())
     {
-        App::import('Model', $this->modelName);
-        $this->Model = new $this->modelName();
+        $this->settings = Set::merge($this->settings, $settings);
     }
 
     /**
@@ -88,14 +73,18 @@ class ModelRoute extends CakeRoute
         foreach ($url as $val) {
             $params[] = $val;
         }
-        $value = implode('/', array_filter($params));
-        $name = $this->Model->field($this->fields['name'], array(
-            $this->fields['value'] => $value
-        ));
-        if ($name) {
-            return $name;
+        $conditions = array(
+            $this->settings['model'] . '.' . $this->settings['fields']['value'] => implode('/', array_filter($params)),
+        );
+        if (!empty($this->settings['scope'])) {
+            $conditions = array_merge($conditions, $this->settings['scope']);
         }
-        return false;
+        App::import('Model', $this->settings['model']);
+        $result = ClassRegistry::init($this->settings['model'])->field($this->settings['fields']['name'], $conditions);
+        if (empty($result)) {
+            return false;
+        }
+        return $result;
     }
 
     /**
@@ -106,22 +95,28 @@ class ModelRoute extends CakeRoute
      */
     public function parse($url)
     {
-        $value = $this->Model->field($this->fields['value'], array(
-            $this->fields['name'] => substr($url, 1)
-        ));
-        if ($value) {
-            $values = explode('/', $value);
-            $count = count($values);
-            if ($count >= 2) {
-                $params['controller'] = $values[0];
-                $params['action'] = $values[1];
-                $params['plugin'] = null;
-                $params['pass'] = $params['named'] = array();
-                for ($i = 2; $i < $count; $i++) {
-                    $params['pass'][] = $values[$i];
-                }
-                return $params;
+        $conditions = array(
+            $this->settings['model'] . '.' . $this->settings['fields']['name'] => substr($url, 1),
+        );
+        if (!empty($this->settings['scope'])) {
+            $conditions = array_merge($conditions, $this->settings['scope']);
+        }
+        App::import('Model', $this->settings['model']);
+        $result = ClassRegistry::init($this->settings['model'])->field($this->settings['fields']['value'], $conditions);
+        if (empty($result)) {
+            return false;
+        }
+        $parts = explode('/', $result);
+        $count = count($parts);
+        if ($count >= 2) {
+            $params['controller'] = $parts[0];
+            $params['action'] = $parts[1];
+            $params['plugin'] = null;
+            $params['pass'] = $params['named'] = array();
+            for ($i = 2; $i < $count; $i++) {
+                $params['pass'][] = $parts[$i];
             }
+            return $params;
         }
         return false;
     }
